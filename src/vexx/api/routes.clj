@@ -1,7 +1,8 @@
 (ns vexx.api.routes
   (:require [vexx.cache :as cache]
             [vexx.config :as config]
-            [vexx.ort :as ort]))
+            [vexx.ort :as ort]
+            [vexx.slab :as slab]))
 
 (defn- request-body
   [request]
@@ -92,8 +93,76 @@
         (catch Throwable error
           (error-response error))))))
 
+(defn slab-register-handler
+  [request]
+  (let [cfg (config/config)]
+    (if-not (authorized? request cfg)
+      (unauthorized-response)
+      (try
+        (let [body (request-body request)
+              slab-path (body-value body :path)
+              dims (body-value body :dims)]
+          (when-not (and slab-path dims)
+            (throw (ex-info "invalid_slab_register_payload" {:path slab-path :dims dims})))
+          (let [result (slab/register (str slab-path) (int dims))]
+            (ok-response result)))
+        (catch Throwable error
+          (error-response error))))))
+
+(defn slab-list-handler
+  [_request]
+  {:status 200
+   :body {:ok true
+          :service "vexx"
+          :slabs (slab/list-slabs)}})
+
+(defn slab-get-handler
+  [request]
+  (let [slab-id (get-in request [:path-params :slab-id])]
+    (if-let [s (slab/get-slab slab-id)]
+      {:status 200
+       :body {:ok true
+              :service "vexx"
+              :slab-id slab-id
+              :path (:path s)
+              :dims (aget ^ints (:dims s) 0)
+              :row-count (:row-count s)
+              :file-size (:file-size s)}}
+      {:status 404
+       :body {:ok false :error "slab_not_found" :slab-id slab-id}})))
+
+(defn cosine-topk-by-slab-handler
+  [request]
+  (let [cfg (config/config)]
+    (if-not (authorized? request cfg)
+      (unauthorized-response)
+      (try
+        (let [body (request-body request)
+              slab-id (body-value body :slabId)
+              query-offset (long (body-value body :queryOffset))
+              candidate-offsets (mapv long (vec (body-value body :candidateOffsets)))
+              k (or (body-value body :k) 10)
+              device (body-value body :device)]
+          (when-not (and slab-id query-offset candidate-offsets)
+            (throw (ex-info "invalid_topk_by_slab_payload" {:slab-id slab-id
+                                                            :query-offset query-offset
+                                                            :candidate-offsets candidate-offsets})))
+          (let [result (slab/cosine-topk-by-slab cfg {:slab-id (str slab-id)
+                                                       :query-offset query-offset
+                                                       :candidate-offsets candidate-offsets
+                                                       :k k
+                                                       :device device})]
+            (ok-response result)))
+        (catch Throwable error
+          (error-response error))))))
+
 (def routes
   [["/v1"
     ["/health" {:get health-handler}]
     ["/cosine/matrix" {:post cosine-matrix-handler}]
-    ["/cosine/topk" {:post cosine-topk-handler}]]])
+    ["/cosine/topk" {:post cosine-topk-handler}]]
+   ["/v2"
+    ["/slabs/register" {:post slab-register-handler}]
+    ["/slabs/list" {:get slab-list-handler}]
+    ["/slabs/info/:slab-id" {:get slab-get-handler}]
+    ["/cosine/topk-by-slab" {:post cosine-topk-by-slab-handler}]]])
