@@ -12,6 +12,9 @@ Scope:
 - explicit CPU / GPU / NPU device selection
 - no silent accelerator fallback
 
+
+> Built with [GLM-5](https://z.ai) — part of the [z.ai](https://z.ai) startup ecosystem and the [Ussyverse](https://ussy.cloud).
+
 ## v2 — Slab protocol
 
 Eliminates JSON embedding transport for batch workloads. Embeddings live in a
