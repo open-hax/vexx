@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: "vexx",
-      cwd: "/home/err/devel/orgs/open-hax/openplanner/packages/vexx",
+      cwd: "/home/err/devel/orgs/open-hax/vexx",
       script: "clojure",
       args: "-M:run",
       interpreter: "none",
@@ -19,6 +19,8 @@ module.exports = {
       max_restarts: 10,
       restart_delay: 5000,
       kill_timeout: 10000,
+      wait_ready: true,
+      listen_timeout: 15000,
     },
   ],
 };
