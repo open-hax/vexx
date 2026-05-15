@@ -8,7 +8,8 @@ module.exports = {
       interpreter: "none",
       env: {
         VEXX_HOST: "0.0.0.0",
-        VEXX_PORT: "8787",
+        VEXX_PORT: "8791",
+        VEXX_API_KEY: "",
         VEXX_DEVICE: "NPU",
         VEXX_AUTO_ORDER: "NPU,GPU,CPU",
         VEXX_REQUIRE_ACCEL: "true",

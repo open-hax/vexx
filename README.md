@@ -59,6 +59,19 @@ Current backend split:
 VEXX_DEVICE=NPU VEXX_REQUIRE_ACCEL=true clojure -M:run
 ```
 
+## Host PM2 sidecar
+
+OpenPlanner containers reach the host-side Vexx fast lane through
+`http://host.docker.internal:8791`. The PM2 config binds to the host interface
+so Docker containers can reach it, and avoids the local service already
+occupying port `8787`:
+
+```bash
+./scripts/build-native.sh
+pm2 start ecosystem.config.cjs --update-env
+curl -fsS http://127.0.0.1:8791/v1/health
+```
+
 ## Docker
 
 ```bash
